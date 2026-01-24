@@ -64,7 +64,29 @@ local function apply_top1_appearance_and_animation()
         return
     end
     
+    -- Get player name
+    local playerName = "Unknown"
+    local nameSuccess, nameResult = pcall(function()
+        return game:GetService("Players"):GetNameFromUserIdAsync(top1UserId)
+    end)
+    
+    if nameSuccess and nameResult then
+        playerName = nameResult
+    end
+    
     pcall(function()
+        -- Save BillboardGui before applying description
+        local head = rig:FindFirstChild("Head")
+        local savedBillboards = {}
+        
+        if head then
+            for _, child in pairs(head:GetChildren()) do
+                if child:IsA("BillboardGui") then
+                    table.insert(savedBillboards, child:Clone())
+                end
+            end
+        end
+        
         -- Delete any existing shirt and pants first
         local oldShirt = rig:FindFirstChild("Shirt")
         if oldShirt then oldShirt:Destroy() end
@@ -75,7 +97,18 @@ local function apply_top1_appearance_and_animation()
         -- Apply the description (updates body, face, and properties)
         rig.Humanoid:ApplyDescription(humanoidDesc)
         
-        print("[ANIM] Applied appearance for UserId: " .. top1UserId)
+        -- Restore BillboardGuis to the head
+        head = rig:FindFirstChild("Head")
+        if head then
+            for _, billboard in pairs(savedBillboards) do
+                billboard.Parent = head
+            end
+        end
+        
+        -- Set the display name
+        rig.Humanoid.DisplayName = playerName
+        
+        print("[ANIM] Applied appearance for UserId: " .. top1UserId .. " (" .. playerName .. ")")
     end)
     
     if not animationToPlay or not animationToPlay:IsA("Animation") then
