@@ -1,18 +1,27 @@
+--// Services
 local players = game:GetService("Players")
 local DSS = game:GetService("DataStoreService")
+-- Retrieve the time spent leaderboard to find the #1 player
 local Leaderboard = DSS:GetOrderedDataStore("TimeSpentBoard1")
 
 --// Variables
+-- The rig model that will display the top 1 player's appearance
 local rig = workspace.TimeSpentLeaderboard.FirstPlaceAvatar:WaitForChild("Rig")
+-- The billboard GUI that displays the player's name and rank (preserved during updates)
 local first_place_tag = workspace.TimeSpentLeaderboard.FirstPlaceAvatar:WaitForChild("FirstPlaceTag")
+-- The animation to play on the rig (e.g., dancing animation)
 local animationToPlay = workspace.TimeSpentLeaderboard.FirstPlaceAvatar:WaitForChild("AnimationToPlay")
+-- Current playing animation (so we can stop it when switching players)
 local currentAnimTrack = nil
+-- Tracks which user is currently being displayed (prevents unnecessary updates)
 local currentTop1UserId = nil
 
 --// Functions
+-- Gets the UserId of the player with the most time spent
 local function getTop1PlayerUserId()
-    local isAscending = false
+    local isAscending = false  -- false = highest time first
     local pageSize = 1
+    -- Get the single highest-ranked entry from the leaderboard
     local pages = Leaderboard:GetSortedAsync(isAscending, pageSize)
     local top1 = pages:GetCurrentPage()
 
@@ -21,6 +30,7 @@ local function getTop1PlayerUserId()
         return nil
     end
     
+    -- Extract UserId from the DataStore key (format: "id_{userid}_Time Played")
     local data = top1[1]
     local keyParts = data.key:split('_')
     local userId = tonumber(keyParts[2])
@@ -33,10 +43,12 @@ local function getTop1PlayerUserId()
     return userId
 end
 
+-- Updates the rig to display the top 1 player's appearance and plays their animation
+-- Only updates if the top player has changed (efficient performance)
 local function apply_top1_appearance_and_animation()
     local top1UserId = getTop1PlayerUserId()
     
-    -- Only update if top player has changed
+    -- Skip if the top player hasn't changed (save performance)
     if top1UserId == currentTop1UserId then
         return
     end
@@ -48,12 +60,12 @@ local function apply_top1_appearance_and_animation()
         return
     end
 
-    -- Stop old animation
+    -- Stop the currently playing animation before starting a new one
     if currentAnimTrack then
         pcall(function() currentAnimTrack:Stop() end)
     end
 
-    -- Get player appearance by UserId (works even if player is not in this server)
+    -- Get the appearance data for the top 1 player (works even if they're offline)
     local success, humanoidDesc = pcall(function()
         return players:GetHumanoidDescriptionFromUserId(top1UserId)
     end)
@@ -64,7 +76,7 @@ local function apply_top1_appearance_and_animation()
         return
     end
     
-    -- Get player name
+    -- Get the player's username for display
     local playerName = "Unknown"
     local nameSuccess, nameResult = pcall(function()
         return game:GetService("Players"):GetNameFromUserIdAsync(top1UserId)
@@ -75,11 +87,12 @@ local function apply_top1_appearance_and_animation()
     end
     
     pcall(function()
-        -- Save BillboardGui before applying description
+        -- Save BillboardGui before applying description (prevents deletion)
         local head = rig:FindFirstChild("Head")
         local savedBillboards = {}
         
         if head then
+            -- Clone all BillboardGuis on the head so we can restore them later
             for _, child in pairs(head:GetChildren()) do
                 if child:IsA("BillboardGui") then
                     table.insert(savedBillboards, child:Clone())
@@ -87,17 +100,17 @@ local function apply_top1_appearance_and_animation()
             end
         end
         
-        -- Delete any existing shirt and pants first
+        -- Remove old shirt and pants (prevents conflicts with new appearance)
         local oldShirt = rig:FindFirstChild("Shirt")
         if oldShirt then oldShirt:Destroy() end
         
         local oldPants = rig:FindFirstChild("Pants")
         if oldPants then oldPants:Destroy() end
         
-        -- Apply the description (updates body, face, and properties)
+        -- Apply the new player's appearance (body, face, accessories, etc)
         rig.Humanoid:ApplyDescription(humanoidDesc)
         
-        -- Restore BillboardGuis to the head
+        -- Restore the BillboardGui so it doesn't get deleted
         head = rig:FindFirstChild("Head")
         if head then
             for _, billboard in pairs(savedBillboards) do
@@ -105,17 +118,19 @@ local function apply_top1_appearance_and_animation()
             end
         end
         
-        -- Set the display name
+        -- Set the display name above the character
         rig.Humanoid.DisplayName = playerName
         
         print("[ANIM] Applied appearance for UserId: " .. top1UserId .. " (" .. playerName .. ")")
     end)
     
+    -- Validate the animation exists
     if not animationToPlay or not animationToPlay:IsA("Animation") then
         print("[ANIM] Invalid animation object: " .. tostring(animationToPlay))
         return
     end
     
+    -- Load the animation onto the humanoid
     local animSuccess, newTrack = pcall(function()
         return rig.Humanoid:LoadAnimation(animationToPlay)
     end)
@@ -125,14 +140,17 @@ local function apply_top1_appearance_and_animation()
         return
     end
     
+    -- Play the animation
     currentAnimTrack = newTrack
     currentAnimTrack:Play()
     print("[ANIM] Started playing animation for UserId: " .. top1UserId)
 end
 
+--// Main Loop: Check for top 1 player changes every 5 seconds
 task.spawn(function()
     while true do
         task.wait(5)
+        -- Update the rig if the top player has changed
         apply_top1_appearance_and_animation()
     end
 end)
