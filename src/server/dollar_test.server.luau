@@ -5,10 +5,7 @@ button.Touched:Connect(function(hit)
 	local player = players:GetPlayerFromCharacter(hit.Parent)
 	if not player then return end
 	
-	local leaderstats = player:WaitForChild("leaderstats")
-	if not leaderstats then return end
-	
-	local coins = leaderstats:WaitForChild("Coins")
+	local coins = player:WaitForChild("Coins")
 	if not coins then return end
 
 	coins.Value += 50
