@@ -150,6 +150,32 @@ local function OnServerShutdown()
 	end
 end
 
+-- Periodically saves all online players' data to DataStore
+-- This ensures the DataStore Manager has fresh data to cache every 60 seconds
+local function PeriodicSaveData()
+	for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+		local plr_key = "id_"..player.UserId.."_Coins"
+		local plr_key2 = "id_"..player.UserId.."_Time Played"
+
+		-- Get raw coin and time values
+		local coins = player:FindFirstChild("Coins")
+		local timeSpent = player:FindFirstChild("Time Played")
+
+		local success, result = pcall(function()
+			if coins then
+				DataStore:SetAsync(plr_key, coins.Value)
+			end
+			if timeSpent then
+				DataStore2:SetAsync(plr_key2, timeSpent.Value)
+			end
+		end)
+
+		if not success then 
+			warn(result)
+		end
+	end
+end
+
 -- Called when a player leaves the game
 -- Saves their current coins and time spent to DataStore
 local function OnPlayerRemoving(player)
@@ -296,3 +322,11 @@ end
 game.Players.PlayerAdded:Connect(OnPlayerAdded)
 Players.PlayerRemoving:Connect(OnPlayerRemoving)
 game:BindToClose(OnServerShutdown)
+
+-- Periodically save player data every 30 seconds so DataStore Manager has fresh rankings
+task.spawn(function()
+	while true do
+		task.wait(30)
+		PeriodicSaveData()
+	end
+end)

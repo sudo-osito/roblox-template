@@ -7,25 +7,22 @@ print("[LEADERBOARD] Time Played leaderboard server script started")
 
 --// Functions
 -- Formats seconds into a readable time format for display
--- Examples: 45 -> "45s", 90 -> "1m 30s", 3661 -> "1h 1m"
+-- Examples: 45 -> "45s", 90 -> "1m 30s", 3661 -> "1h 1m 1s"
 local function formatTime(seconds)
 	if seconds < 60 then
 		return seconds .. "s"
 	elseif seconds < 3600 then
 		local minutes = math.floor(seconds / 60)
 		local remainingSeconds = seconds % 60
-		if remainingSeconds > 0 then
-			return minutes .. "m " .. remainingSeconds .. "s"
-		else
-			return minutes .. "m"
-		end
+		return minutes .. "m " .. remainingSeconds .. "s"
 	else
 		local hours = math.floor(seconds / 3600)
 		local remainingMinutes = math.floor((seconds % 3600) / 60)
-		if remainingMinutes > 0 then
-			return hours .. "h " .. remainingMinutes .. "m"
+		local remainingSeconds = seconds % 60
+		if remainingSeconds > 0 then
+			return hours .. "h " .. remainingMinutes .. "m " .. remainingSeconds .. "s"
 		else
-			return hours .. "h"
+			return hours .. "h " .. remainingMinutes .. "m"
 		end
 	end
 end
@@ -43,59 +40,41 @@ local boardFrame = UI:WaitForChild("ScrollingFrame")
 --// Functions
 -- Saves all currently online players' time spent data to the DataStore
 -- This ensures the leaderboard rankings stay up-to-date with current session data
+-- NOTE: This is now handled by datastore_manager.server.luau
 local function SaveData()
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-		local plr_key = "id_"..player.UserId.."_Time Played"
-
-		-- Get the raw time spent value (stored on player)
-		local timeSpent = player:FindFirstChild("Time Played")
-
-		local success, result = pcall(function()
-			if timeSpent then
-				DataStore:SetAsync(plr_key, timeSpent.Value)
-			end
-		end)
-
-		if not success then 
-			warn(result)
-		end
-	end
+    -- Data is saved on player exit in savedata.server.luau
+    -- This function is kept for backward compatibility
+    return
 end
 
--- Fetches the top 50 players by time spent from the DataStore
+-- Fetches the top 50 players by time spent from the cached DataStore manager
 -- Returns a table with player info: { Player = name, TimeSpent = seconds, Rank = position }
 local function getTop50Players()
-	local isAscending = false  -- false = highest time first
-	local pageSize = 50
-	-- Get sorted data from DataStore (automatically sorted by value, highest first)
-	local pages = DataStore:GetSortedAsync(isAscending, pageSize)
-	local top50 = pages:GetCurrentPage()
-
-	local top = {}
-
-	for rank, data in ipairs(top50) do
-		local dataName = data.key  -- Key format: "id_{userid}_Time Played"
-		local userId = tonumber(dataName:split('_')[2])
-		local timeSpent = data.value
-		
-		-- Get the player's username by their UserId (works even if they're offline)
-		local name = "Unknown"
-		local success, nameResult = pcall(function()
-			return game:GetService("Players"):GetNameFromUserIdAsync(userId)
-		end)
-		
-		if success and nameResult then
-			name = nameResult
-		else
-			print("[LEADERBOARD] Failed to get name for userId: " .. tostring(userId))
-		end
-
-		-- Create player entry with rank, name, and time spent
-		local currentPlayer =  { Player = name, TimeSpent = timeSpent, Rank = rank, }
-		table.insert(top, rank, currentPlayer)
+	-- Wait for DataStore manager to initialize if needed
+	local maxWait = 0
+	while not _G.DataStoreManager and maxWait < 50 do
+		task.wait(0.1)
+		maxWait = maxWait + 1
 	end
-
-	return top
+	
+	if not _G.DataStoreManager then
+		warn("[LEADERBOARD] DataStore manager not found!")
+		return {}
+	end
+	
+	local cached = _G.DataStoreManager.getTimeLeaderboard()
+	
+	-- Convert cache format to expected format
+	local result = {}
+	for _, data in ipairs(cached) do
+		table.insert(result, {
+			Rank = data.Rank,
+			Player = data.Player,
+			TimeSpent = data.TimeSpent
+		})
+	end
+	
+	return result
 end
 
 -- Clears all player entry frames from the leaderboard (for updating)
@@ -109,9 +88,9 @@ local function ClearList()
 	end)
 end
 
--- Main update function: saves data, clears old leaderboard, and displays top 50 players
+-- Main update function: Gets cached leaderboard and displays top 50 players
 local function UpdateList()
-	SaveData()
+	-- Don't save data here - it's only saved on player exit in savedata.server.luau
 	ClearList()
 	local top50 = getTop50Players()
 	
@@ -132,8 +111,18 @@ local function UpdateList()
 	end)
 end
 
---// Main Loop: Update the leaderboard every 60 seconds
+--// Main Loop: Update the leaderboard every 60 seconds (synced with DataStore Manager)
 task.spawn(function()
+	-- Wait for DataStore Manager to initialize
+	local maxWait = 0
+	while not _G.DataStoreManager and maxWait < 50 do
+		task.wait(0.1)
+		maxWait = maxWait + 1
+	end
+	
+	-- Give manager time to fetch initial data (time leaderboard is fetched 2 seconds after coins)
+	task.wait(3)
+	
 	while true do
 		UpdateList()
 		-- Countdown timer: shows how long until next update

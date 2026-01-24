@@ -41,59 +41,29 @@ local boardFrame = UI:WaitForChild("ScrollingFrame")
 --// Functions
 -- Saves all currently online players' coin data to the DataStore
 -- This ensures the leaderboard rankings stay up-to-date with current session data
+-- NOTE: This is now handled by datastore_manager.server.luau
 local function SaveData()
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-		local plr_key = "id_"..player.UserId.."_Coins"
-
-		-- Get the raw coins value (stored on player, not in leaderstats)
-		local coins = player:FindFirstChild("Coins")
-
-		local success, result = pcall(function()
-			if coins then
-				DataStore:SetAsync(plr_key, coins.Value)
-			end
-		end)
-
-		if not success then 
-			warn(result)
-		end
-	end
+    -- Data is saved on player exit in savedata.server.luau
+    -- This function is kept for backward compatibility
+    return
 end
 
--- Fetches the top 50 players by coins from the DataStore
+-- Fetches the top 50 players by coins from the cached DataStore manager
 -- Returns a table with player info: { Player = name, Coins = amount, Rank = position }
 local function getTop50Players()
-	local isAscending = false  -- false = highest coins first
-	local pageSize = 50
-	-- Get sorted data from DataStore (automatically sorted by value, highest first)
-	local pages = DataStore:GetSortedAsync(isAscending, pageSize)
-	local top50 = pages:GetCurrentPage()
-
-	local top = {}
-
-	for rank, data in ipairs(top50) do
-		local dataName = data.key  -- Key format: "id_{userid}_Coins"
-		local userId = tonumber(dataName:split('_')[2])
-		local coins = data.value
-		
-		-- Get the player's username by their UserId (works even if they're offline)
-		local name = "Unknown"
-		local success, nameResult = pcall(function()
-			return game:GetService("Players"):GetNameFromUserIdAsync(userId)
-		end)
-		
-		if success and nameResult then
-			name = nameResult
-		else
-			print("[LEADERBOARD] Failed to get name for userId: " .. tostring(userId))
-		end
-
-		-- Create player entry with rank, name, and coins
-		local currentPlayer =  { Player = name, Coins = coins, Rank = rank, }
-		table.insert(top, rank, currentPlayer)
+	-- Wait for DataStore manager to initialize if needed
+	local maxWait = 0
+	while not _G.DataStoreManager and maxWait < 50 do
+		task.wait(0.1)
+		maxWait = maxWait + 1
 	end
-
-	return top
+	
+	if not _G.DataStoreManager then
+		warn("[LEADERBOARD] DataStore manager not found!")
+		return {}
+	end
+	
+	return _G.DataStoreManager.getCoinsLeaderboard()
 end
 
 -- Clears all player entry frames from the leaderboard (for updating)
@@ -107,9 +77,9 @@ local function ClearList()
 	end)
 end
 
--- Main update function: saves data, clears old leaderboard, and displays top 50 players
+-- Main update function: Gets cached leaderboard and displays top 50 players
 local function UpdateList()
-	SaveData()
+	-- Don't save data here - it's only saved on player exit in savedata.server.luau
 	ClearList()
 	local top50 = getTop50Players()
 	
@@ -130,8 +100,18 @@ local function UpdateList()
 	end)
 end
 
---// Main Loop: Update the leaderboard every 60 seconds
+--// Main Loop: Update the leaderboard every 60 seconds (synced with DataStore Manager)
 task.spawn(function()
+	-- Wait for DataStore Manager to initialize
+	local maxWait = 0
+	while not _G.DataStoreManager and maxWait < 50 do
+		task.wait(0.1)
+		maxWait = maxWait + 1
+	end
+	
+	-- Give manager time to fetch initial data
+	task.wait(1)
+	
 	while true do
 		UpdateList()
 		-- Countdown timer: shows how long until next update

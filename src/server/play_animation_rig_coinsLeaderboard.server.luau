@@ -1,8 +1,5 @@
 --// Services
 local players = game:GetService("Players")
-local DSS = game:GetService("DataStoreService")
--- Retrieve the coins leaderboard to find the #1 player
-local Leaderboard = DSS:GetOrderedDataStore("CoinsBoard1")
 
 --// Variables
 -- The rig model that will display the top 1 player's appearance
@@ -17,30 +14,21 @@ local currentAnimTrack = nil
 local currentTop1UserId = nil
 
 --// Functions
--- Gets the UserId of the player with the most coins
+-- Gets the UserId of the player with the most coins from the cached manager
 local function getTop1PlayerUserId()
-    local isAscending = false  -- false = highest coins first
-    local pageSize = 1
-    -- Get the single highest-ranked entry from the leaderboard
-    local pages = Leaderboard:GetSortedAsync(isAscending, pageSize)
-    local top1 = pages:GetCurrentPage()
-
-    if #top1 < 1 then
-        print("[TOP1] No players found in leaderboard")
-        return nil
-    end
-    
-    -- Extract UserId from the DataStore key (format: "id_{userid}_Coins")
-    local data = top1[1]
-    local keyParts = data.key:split('_')
-    local userId = tonumber(keyParts[2])
-    
-    if not userId then
-        print("[TOP1] Failed to parse userId from key: " .. data.key)
-        return nil
-    end
-    
-    return userId
+	-- Wait for DataStore manager to initialize if needed
+	local maxWait = 0
+	while not _G.DataStoreManager and maxWait < 50 do
+		task.wait(0.1)
+		maxWait = maxWait + 1
+	end
+	
+	if not _G.DataStoreManager then
+		print("[TOP1] DataStore manager not found!")
+		return nil
+	end
+	
+	return _G.DataStoreManager.getTop1CoinPlayer()
 end
 
 -- Updates the rig to display the top 1 player's appearance and plays their animation
@@ -146,10 +134,10 @@ local function apply_top1_appearance_and_animation()
     print("[ANIM] Started playing animation for UserId: " .. top1UserId)
 end
 
---// Main Loop: Check for top 1 player changes every 5 seconds
+--// Main Loop: Check for top 1 player changes every 60 seconds (synced with leaderboard updates)
 task.spawn(function()
     while true do
-        task.wait(5)
+        task.wait(60)
         -- Update the rig if the top player has changed
         apply_top1_appearance_and_animation()
     end
