@@ -66,12 +66,31 @@ local function play_animation_for_top1_player()
     end
     
     pcall(function()
-        -- Apply the description first
+        -- Apply the description (which includes shirt and pants)
         rig.Humanoid:ApplyDescription(humanoidDesc)
         
-        -- Then clear old accessories that might conflict
-        for _, accessory in pairs(rig:FindDescendantsOfClass("Accessory")) do
-            accessory.Parent = nil
+        -- Wait for new shirt/pants to be created
+        task.wait(0.1)
+        
+        -- Only destroy OLD shirt/pants that aren't from the new description
+        -- Find newly created shirt/pants by checking their parent
+        local newShirt = rig:FindFirstChild("Shirt")
+        local newPants = rig:FindFirstChild("Pants")
+        
+        -- If no shirt/pants were created by description, the player might not have them
+        -- In that case, keep the original ones
+        if newShirt or newPants then
+            -- Destroy any duplicates in descendants
+            for _, item in pairs(rig:FindDescendantsOfClass("Shirt")) do
+                if item ~= newShirt then
+                    item:Destroy()
+                end
+            end
+            for _, item in pairs(rig:FindDescendantsOfClass("Pants")) do
+                if item ~= newPants then
+                    item:Destroy()
+                end
+            end
         end
         
         print("[ANIM] Applied appearance for " .. top1Player.Name)
