@@ -2,11 +2,12 @@
 local DSS = game:GetService("DataStoreService")
 local DataStore = DSS:GetOrderedDataStore("CoinsBoard1")
 
+print("[LEADERBOARD] Coins leaderboard server script started")
 --// Variables
-local counter = workspace.DollarLeaderboard.UpdateBoardTimer.Timer.TextLabel
-local UI = workspace.DollarLeaderboard.ScoreBlock.SurfaceGui
-local basePlayerFrame = UI.BasePlayerFrame
-local boardFrame = UI.ScrollingFrame
+local counter = workspace.DollarLeaderboard.UpdateBoardTimer.Timer:WaitForChild("TextLabel")
+local UI = workspace.DollarLeaderboard.ScoreBlock:WaitForChild("SurfaceGui")
+local basePlayerFrame = UI:WaitForChild("BasePlayerFrame")
+local boardFrame = UI:WaitForChild("ScrollingFrame")
 
 --// Functions
 local function SaveData()
@@ -35,8 +36,20 @@ local function getTop50Players()
 
 	for rank, data in ipairs(top50) do
 		local dataName = data.key
-		local name = game:GetService("Players"):GetNameFromUserIdAsync(dataName:split('_')[2])
+		local userId = tonumber(dataName:split('_')[2])
 		local coins = data.value
+		
+		-- Get name with error handling
+		local name = "Unknown"
+		local success, nameResult = pcall(function()
+			return game:GetService("Players"):GetNameFromUserIdAsync(userId)
+		end)
+		
+		if success and nameResult then
+			name = nameResult
+		else
+			print("[LEADERBOARD] Failed to get name for userId: " .. tostring(userId))
+		end
 
 		local currentPlayer =  { Player = name, Coins = coins, Rank = rank, }
 		table.insert(top, rank, currentPlayer)
@@ -65,9 +78,9 @@ local function UpdateList()
 			local frame = basePlayerFrame:Clone()
 			frame.Parent = boardFrame
 			
-			frame.Plr.Text = plr.Player
-			frame.Amount.Text = plr.Coins
-			frame.Rank.Text = plr.Rank
+			frame.Plr.Text = tostring(plr.Player)
+			frame.Amount.Text = tostring(plr.Coins)
+			frame.Rank.Text = tostring(plr.Rank)
 			
 			frame.Visible = true
 			task.wait(0.25)

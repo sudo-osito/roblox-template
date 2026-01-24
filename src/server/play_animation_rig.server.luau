@@ -7,9 +7,10 @@ local rig = workspace.DollarLeaderboard.FirstPlaceAvatar:WaitForChild("Rig")
 local first_place_tag = workspace.DollarLeaderboard.FirstPlaceAvatar:WaitForChild("FirstPlaceTag")
 local animationToPlay = workspace.DollarLeaderboard.FirstPlaceAvatar:WaitForChild("AnimationToPlay")
 local currentAnimTrack = nil
+local currentTop1UserId = nil
 
 --// Functions
-local function getTop1Player()
+local function getTop1PlayerUserId()
     local isAscending = false
     local pageSize = 1
     local pages = Leaderboard:GetSortedAsync(isAscending, pageSize)
@@ -29,23 +30,21 @@ local function getTop1Player()
         return nil
     end
     
-    local player = players:GetPlayerByUserId(userId)
-    if not player then
-        print("[TOP1] Top player (UserId: " .. userId .. ") is not in game")
-        return nil
-    end
-    
-    print("[TOP1] Found player: " .. player.Name .. " with UserId: " .. userId)
-    return player
+    return userId
 end
 
-
-
-local function play_animation_for_top1_player()
-    local top1Player = getTop1Player()
+local function apply_top1_appearance_and_animation()
+    local top1UserId = getTop1PlayerUserId()
     
-    if not top1Player then
-        print("[ANIM] No valid top1 player found, skipping animation")
+    -- Only update if top player has changed
+    if top1UserId == currentTop1UserId then
+        return
+    end
+    
+    currentTop1UserId = top1UserId
+    
+    if not top1UserId then
+        print("[ANIM] No valid top1 player found")
         return
     end
 
@@ -54,46 +53,29 @@ local function play_animation_for_top1_player()
         pcall(function() currentAnimTrack:Stop() end)
     end
 
-    -- Apply player appearance and play animation
+    -- Get player appearance by UserId (works even if player is not in this server)
     local success, humanoidDesc = pcall(function()
-        return players:GetHumanoidDescriptionFromUserId(top1Player.UserId)
+        return players:GetHumanoidDescriptionFromUserId(top1UserId)
     end)
     
     if not success or not humanoidDesc then
-        print("[ANIM] Failed to get humanoid description for " .. top1Player.Name)
-        print("[ANIM] Success: " .. tostring(success) .. " | HumanoidDesc: " .. tostring(humanoidDesc))
+        print("[ANIM] Failed to get humanoid description for UserId: " .. top1UserId)
+        currentTop1UserId = nil
         return
     end
     
     pcall(function()
-        -- Apply the description (which includes shirt and pants)
+        -- Delete any existing shirt and pants first
+        local oldShirt = rig:FindFirstChild("Shirt")
+        if oldShirt then oldShirt:Destroy() end
+        
+        local oldPants = rig:FindFirstChild("Pants")
+        if oldPants then oldPants:Destroy() end
+        
+        -- Apply the description (updates body, face, and properties)
         rig.Humanoid:ApplyDescription(humanoidDesc)
         
-        -- Wait for new shirt/pants to be created
-        task.wait(0.1)
-        
-        -- Only destroy OLD shirt/pants that aren't from the new description
-        -- Find newly created shirt/pants by checking their parent
-        local newShirt = rig:FindFirstChild("Shirt")
-        local newPants = rig:FindFirstChild("Pants")
-        
-        -- If no shirt/pants were created by description, the player might not have them
-        -- In that case, keep the original ones
-        if newShirt or newPants then
-            -- Destroy any duplicates in descendants
-            for _, item in pairs(rig:FindDescendantsOfClass("Shirt")) do
-                if item ~= newShirt then
-                    item:Destroy()
-                end
-            end
-            for _, item in pairs(rig:FindDescendantsOfClass("Pants")) do
-                if item ~= newPants then
-                    item:Destroy()
-                end
-            end
-        end
-        
-        print("[ANIM] Applied appearance for " .. top1Player.Name)
+        print("[ANIM] Applied appearance for UserId: " .. top1UserId)
     end)
     
     if not animationToPlay or not animationToPlay:IsA("Animation") then
@@ -112,12 +94,12 @@ local function play_animation_for_top1_player()
     
     currentAnimTrack = newTrack
     currentAnimTrack:Play()
-    print("[ANIM] Started playing animation for " .. top1Player.Name)
+    print("[ANIM] Started playing animation for UserId: " .. top1UserId)
 end
 
 task.spawn(function()
     while true do
         task.wait(5)
-        play_animation_for_top1_player()
+        apply_top1_appearance_and_animation()
     end
 end)
