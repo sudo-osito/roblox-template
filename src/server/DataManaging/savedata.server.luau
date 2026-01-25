@@ -5,6 +5,8 @@ local DSS = game:GetService("DataStoreService")
 local DataStore = DSS:GetOrderedDataStore("CoinsBoard1")
 -- TimeSpentBoard1: Stores player time spent amounts (sorted highest to lowest for leaderboard)
 local DataStore2 = DSS:GetOrderedDataStore("TimeSpentBoard1")
+-- RebirthsBoard1: Stores player rebirth counts (sorted highest to lowest for leaderboard)
+local DataStore3 = DSS:GetOrderedDataStore("RebirthsBoard1")
 
 --// Functions
 -- Converts seconds into a readable time format (e.g., 3661 -> "1h 1m")
@@ -156,10 +158,12 @@ local function PeriodicSaveData()
 	for _, player in pairs(game:GetService("Players"):GetPlayers()) do
 		local plr_key = "id_"..player.UserId.."_Coins"
 		local plr_key2 = "id_"..player.UserId.."_Time Played"
+		local plr_key3 = "id_"..player.UserId.."_Rebirths"
 
-		-- Get raw coin and time values
+		-- Get raw coin, time, and rebirths values
 		local coins = player:FindFirstChild("Coins")
 		local timeSpent = player:FindFirstChild("Time Played")
+		local rebirths = player:FindFirstChild("Rebirths")
 
 		local success, result = pcall(function()
 			if coins then
@@ -167,6 +171,9 @@ local function PeriodicSaveData()
 			end
 			if timeSpent then
 				DataStore2:SetAsync(plr_key2, timeSpent.Value)
+			end
+			if rebirths then
+				DataStore3:SetAsync(plr_key3, rebirths.Value)
 			end
 		end)
 
@@ -205,6 +212,7 @@ end
 local function OnPlayerAdded(player)
 	local plr_key = "id_"..player.UserId.."_Coins"
 	local plr_key2 = "id_"..player.UserId.."_Time Played"
+	local plr_key3 = "id_"..player.UserId.."_Rebirths"
 
 	-- Load coins from DataStore
 	local success, data = pcall(function()
@@ -214,6 +222,11 @@ local function OnPlayerAdded(player)
 	-- Load time from DataStore
 	local success2, data2 = pcall(function()
 		return DataStore2:GetAsync(plr_key2)
+	end)
+	
+	-- Load rebirths from DataStore
+	local success3, data3 = pcall(function()
+		return DataStore3:GetAsync(plr_key3)
 	end)
 
 	-- Create leaderstats folder for displaying formatted versions
@@ -259,6 +272,25 @@ local function OnPlayerAdded(player)
 		timePlayedDisplay.Value = formatTime(timeSpent.Value)
 	end)
 
+	-- Raw rebirths value stored on player (not in leaderstats) for calculations
+	local rebirths = Instance.new("IntValue")
+	rebirths.Name = "Rebirths"
+	rebirths.Parent = player
+	if success3 then
+		rebirths.Value = data3 or 0
+	end
+
+	-- Rebirths display in leaderstats
+	local rebirthsDisplay = Instance.new("IntValue")
+	rebirthsDisplay.Name = "Rebirths"
+	rebirthsDisplay.Parent = stats
+	rebirthsDisplay.Value = rebirths.Value
+
+	-- Auto-update display whenever rebirths change
+	rebirths.Changed:Connect(function()
+		rebirthsDisplay.Value = rebirths.Value
+	end)
+
 	-- Increment time spent every 1 second in background
 	task.spawn(function()
 		while player.Parent do
@@ -272,18 +304,23 @@ end
 local function OnPlayerRemoving(player)
 	local plr_key = "id_"..player.UserId.."_Coins"
 	local plr_key2 = "id_"..player.UserId.."_Time Played"
+	local plr_key3 = "id_"..player.UserId.."_Rebirths"
 
-	-- Get raw coin and time values from the player
+	-- Get raw coin, time, and rebirths values from the player
 	local coins = player:FindFirstChild("Coins")
 	local timeSpent = player:FindFirstChild("Time Played")
+	local rebirths = player:FindFirstChild("Rebirths")
 
-	-- Save both values to their respective DataStores
+	-- Save all values to their respective DataStores
 	local success, result = pcall(function()
 		if coins then
 			DataStore:SetAsync(plr_key, coins.Value)
 		end
 		if timeSpent then
 			DataStore2:SetAsync(plr_key2, timeSpent.Value)
+		end
+		if rebirths then
+			DataStore3:SetAsync(plr_key3, rebirths.Value)
 		end
 	end)
 
@@ -297,18 +334,23 @@ local function OnServerShutdown()
 	for _, player in pairs(game:GetService("Players"):GetPlayers()) do
 		local plr_key = "id_"..player.UserId.."_Coins"
 		local plr_key2 = "id_"..player.UserId.."_Time Played"
+		local plr_key3 = "id_"..player.UserId.."_Rebirths"
 
-		-- Get raw coin and time values from the player
+		-- Get raw coin, time, and rebirths values from the player
 		local coins = player:FindFirstChild("Coins")
 		local timeSpent = player:FindFirstChild("Time Played")
+		local rebirths = player:FindFirstChild("Rebirths")
 
-		-- Save both values to their respective DataStores
+		-- Save all values to their respective DataStores
 		local success, result = pcall(function()
 			if coins then
 				DataStore:SetAsync(plr_key, coins.Value)
 			end
 			if timeSpent then
 				DataStore2:SetAsync(plr_key2, timeSpent.Value)
+			end
+			if rebirths then
+				DataStore3:SetAsync(plr_key3, rebirths.Value)
 			end
 		end)
 

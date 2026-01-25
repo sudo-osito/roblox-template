@@ -15,8 +15,11 @@ button.Touched:Connect(function(hit)
 	-- NOTE: This is stored directly on player, not in leaderstats
 	local coins = player:WaitForChild("Coins")
 	if not coins then return end
+	local rebirths = player:WaitForChild("Rebirths")
 
 	-- Add 50 coins (formatted display will automatically update via the Changed connection in savedata.lua)
 	coins.Value += 50
+	rebirths.Value += 1
+	
 	
 end)
