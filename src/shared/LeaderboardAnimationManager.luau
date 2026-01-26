@@ -25,6 +25,15 @@ local function makeController(workspacePath, getTopPlayerFunction)
     local rig = firstPlaceAvatar:WaitForChild("Rig")
     local animationToPlay = firstPlaceAvatar:WaitForChild("AnimationToPlay")
     
+    -- Create a yellow highlight for the rig
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = rig
+    highlight.FillColor = Color3.new(1, 0.768627, 0)  -- Yellow
+    highlight.FillTransparency = 1
+    highlight.OutlineColor = Color3.new(1, 0.815686, 0)  -- Yellow
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.Occluded
+    
     -- Current playing animation (so we can stop it when switching players)
     local currentAnimTrack = nil
     -- Tracks which user is currently being displayed (prevents unnecessary updates)
