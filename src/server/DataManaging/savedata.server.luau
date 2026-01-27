@@ -261,17 +261,6 @@ local function OnPlayerAdded(player)
 		timeSpent.Value = data2 or 0
 	end
 
-	-- Formatted time display in leaderstats (shows "1h 5m" instead of 3900)
-	local timePlayedDisplay = Instance.new("StringValue")
-	timePlayedDisplay.Name = "Time Played"
-	timePlayedDisplay.Parent = stats
-	timePlayedDisplay.Value = formatTime(timeSpent.Value)
-
-	-- Auto-update formatted display whenever raw time changes
-	timeSpent.Changed:Connect(function()
-		timePlayedDisplay.Value = formatTime(timeSpent.Value)
-	end)
-
 	-- Raw rebirths value stored on player (not in leaderstats) for calculations
 	local rebirths = Instance.new("IntValue")
 	rebirths.Name = "Rebirths"
