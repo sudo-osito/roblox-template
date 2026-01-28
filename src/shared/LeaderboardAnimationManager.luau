@@ -134,7 +134,6 @@ local function makeController(workspacePath, getTopPlayerFunction)
             -- Set the display name above the character
             rig.Humanoid.DisplayName = playerName
             
-            print("[ANIM] Applied appearance for UserId: " .. top1UserId .. " (" .. playerName .. ")")
         end)
         
         -- Validate the animation exists
@@ -156,7 +155,6 @@ local function makeController(workspacePath, getTopPlayerFunction)
         -- Play the animation
         currentAnimTrack = newTrack
         currentAnimTrack:Play()
-        print("[ANIM] Started playing animation for UserId: " .. top1UserId)
         return true
     end
     return apply_top1_appearance_and_animation

@@ -4,7 +4,19 @@ local LeaderboardAnimationManager = require(game.ReplicatedStorage.Shared.Leader
 -- Retrieve the ordered DataStore that tracks all players' rebirths (sorted highest to lowest)
 local DataStore = DSS:GetOrderedDataStore("RebirthsBoard1")
 
-print("[LEADERBOARD] Rebirths leaderboard server script started")
+--// Functions
+-- Formats numbers with comma separators (e.g., 1000000 -> "1,000,000")
+local function formatWithCommas(number)
+	local formatted = tostring(number)
+	local k
+	while true do
+		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+		if k == 0 then
+			break
+		end
+	end
+	return formatted
+end
 
 --// Variables
 -- The countdown timer text label that shows "Updating board in X seconds"
@@ -62,9 +74,9 @@ local function UpdateList()
 			local frame = basePlayerFrame:Clone()
 			frame.Parent = boardFrame
 			
-			-- Set the player name, rebirths count, and rank
+			-- Set the player name, rebirths count (with comma formatting), and rank
 			frame.Plr.Text = tostring(plr.Player)
-			frame.Amount.Text = tostring(plr.Rebirths)
+			frame.Amount.Text = formatWithCommas(plr.Rebirths)
 			frame.Rank.Text = tostring(plr.Rank)
 			
 			frame.Visible = true

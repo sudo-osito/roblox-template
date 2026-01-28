@@ -4,7 +4,6 @@ local LeaderboardAnimationManager = require(game.ReplicatedStorage.Shared.Leader
 -- Retrieve the ordered DataStore that tracks all players' time spent (sorted highest to lowest)
 local DataStore = DSS:GetOrderedDataStore("TimeSpentBoard1")
 
-print("[LEADERBOARD] Time Played leaderboard server script started")
 
 --// Functions
 -- Formats seconds into a readable time format for display

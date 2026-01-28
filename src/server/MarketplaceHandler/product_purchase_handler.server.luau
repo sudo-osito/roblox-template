@@ -3,12 +3,14 @@ local Players = game:GetService("Players")
 
 -- Product ID to reward mapping
 local PRODUCTS = {
-	[3524349207] = {coins = 1000, name = "1k Coins"},
-	[3524349395] = {coins = 10000, name = "10k Coins"},
-	[3524349600] = {coins = 50000, name = "50k Coins"},
-	[3524349778] = {coins = 100000, name = "100k Coins"},
-	[3524350143] = {coins = 500000, name = "500k Coins"},
-	[3524350377] = {coins = 1000000, name = "1m Coins"},
+	[3524349207] = {coins = 1000, robux = 9, name = "1k Coins"},
+	[3524349395] = {coins = 10000, robux = 29, name = "10k Coins"},
+	[3524349600] = {coins = 50000, robux = 67, name = "50k Coins"},
+	[3524349778] = {coins = 100000, robux = 99, name = "100k Coins"},
+	[3524350143] = {coins = 500000, robux = 349, name = "500k Coins"},
+	[3524350377] = {coins = 1000000, robux = 649, name = "1m Coins"},
+	[1693043785] = {coins = 2000, robux = 9, name = "Starter Pack"},
+	[1692813873] = {coins = 6000, robux = 39, name = "Pro Starter Pack"},
 }
 
 -- ProcessReceipt callback function
@@ -39,6 +41,12 @@ local function processReceipt(receiptInfo)
 	-- Grant the coins (this will automatically update the formatted display in leaderstats)
 	coins.Value = coins.Value + productData.coins
 	
+	-- Track robux spent for leaderboard
+	local robuxSpent = player:FindFirstChild("Robux Spent")
+	if robuxSpent and productData.robux then
+		robuxSpent.Value = robuxSpent.Value + productData.robux
+	end
+	
 	print(player.Name .. " purchased " .. productData.name .. " and received " .. productData.coins .. " coins")
 	
 	-- Return PurchaseGranted to finalize the transaction
@@ -48,4 +56,3 @@ end
 -- Set the callback
 MarketplaceService.ProcessReceipt = processReceipt
 
-print("Product Purchase Handler initialized")
