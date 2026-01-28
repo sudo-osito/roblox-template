@@ -21,10 +21,21 @@ end
 local StoreGUI = SubMenus:WaitForChild("StoreGUI")
 local closeStoreGUI = StoreGUI:WaitForChild("CloseStore")
 
+StoreGUI.Visible = false
+
 StoreButton.MouseButton1Click:Connect(function()
     StoreGUI.Visible = true
 end)
 
 closeStoreGUI.MouseButton1Click:Connect(function()
     StoreGUI.Visible = false
+end)
+
+-- // HERE STARTS THE FUN PART \\ -- MONEY 
+
+local VIP = SubMenus.StoreGUI.ScrollingFrame.StoreOffer1
+local VIPBUY = VIP.BuyButtonFrame.RealBuyButton
+
+VIPBUY.MouseButton1Click:Connect(function()
+    game:GetService("MarketplaceService"):PromptGamePassPurchase(player, 1691824103)
 end)
