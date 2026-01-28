@@ -21,10 +21,16 @@ end
 local RewardsGUI = SubMenus:WaitForChild("RewardsGUI")
 local closeRewardsGUI = RewardsGUI:WaitForChild("CloseRewards")
 
-RewardsButton.MouseButton1Click:Connect(function()
-    RewardsGUI.Visible = true
+RewardsGUI.Visible = false
+
+RewardsButton.Activated:Connect(function()
+    if RewardsGUI.Visible == true then
+        RewardsGUI.Visible = false
+        return
+    else RewardsGUI.Visible = true
+    end
 end)
 
-closeRewardsGUI.MouseButton1Click:Connect(function()
+closeRewardsGUI.Activated:Connect(function()
     RewardsGUI.Visible = false
 end)

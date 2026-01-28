@@ -16,10 +16,14 @@ button.Touched:Connect(function(hit)
 	local coins = player:WaitForChild("Coins")
 	if not coins then return end
 	local rebirths = player:WaitForChild("Rebirths")
+	if not rebirths then return end
+	local strength = player:WaitForChild("Strength")
+	if not strength then return end
 
 	-- Add 50 coins (formatted display will automatically update via the Changed connection in savedata.lua)
-	coins.Value += 50
 	rebirths.Value += 1
+	strength.Value += 10
+	task.wait(1)
 	
 	
 end)

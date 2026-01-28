@@ -7,6 +7,8 @@ local DataStore = DSS:GetOrderedDataStore("CoinsBoard1")
 local DataStore2 = DSS:GetOrderedDataStore("TimeSpentBoard1")
 -- RebirthsBoard1: Stores player rebirth counts (sorted highest to lowest for leaderboard)
 local DataStore3 = DSS:GetOrderedDataStore("RebirthsBoard1")
+-- StrengthBoard1: Stores player strength amounts (sorted highest to lowest for leaderboard)
+local DataStore4 = DSS:GetOrderedDataStore("StrengthBoard1")
 
 --// Functions
 -- Converts seconds into a readable time format (e.g., 3661 -> "1h 1m")
@@ -51,6 +53,27 @@ local function formatCoins(coins)
 	
 	-- If larger than quadrillions
 	local value = coins / (divisor ^ #suffixes)
+	return string.format("%.1f", value) .. suffixes[#suffixes]
+end
+
+-- Converts strength amounts into shortened format (same as coins)
+local function formatStrength(strength)
+	local suffixes = { "k", "m", "b", "t", "q" }
+	local divisor = 1000
+	
+	if strength < 1000 then
+		return strength
+	end
+	
+	for i, suffix in ipairs(suffixes) do
+		if strength < divisor ^ (i + 1) then
+			local value = strength / (divisor ^ i)
+			return string.format("%.1f", value) .. suffix
+		end
+	end
+	
+	-- If larger than quadrillions
+	local value = strength / (divisor ^ #suffixes)
 	return string.format("%.1f", value) .. suffixes[#suffixes]
 end
 
@@ -159,11 +182,13 @@ local function PeriodicSaveData()
 		local plr_key = "id_"..player.UserId.."_Coins"
 		local plr_key2 = "id_"..player.UserId.."_Time Played"
 		local plr_key3 = "id_"..player.UserId.."_Rebirths"
+		local plr_key4 = "id_"..player.UserId.."_Strength"
 
-		-- Get raw coin, time, and rebirths values
+		-- Get raw coin, time, rebirths, and strength values
 		local coins = player:FindFirstChild("Coins")
 		local timeSpent = player:FindFirstChild("Time Played")
 		local rebirths = player:FindFirstChild("Rebirths")
+		local strength = player:FindFirstChild("Strength")
 
 		local success, result = pcall(function()
 			if coins then
@@ -174,6 +199,9 @@ local function PeriodicSaveData()
 			end
 			if rebirths then
 				DataStore3:SetAsync(plr_key3, rebirths.Value)
+			end
+			if strength then
+				DataStore4:SetAsync(plr_key4, strength.Value)
 			end
 		end)
 
@@ -213,6 +241,7 @@ local function OnPlayerAdded(player)
 	local plr_key = "id_"..player.UserId.."_Coins"
 	local plr_key2 = "id_"..player.UserId.."_Time Played"
 	local plr_key3 = "id_"..player.UserId.."_Rebirths"
+	local plr_key4 = "id_"..player.UserId.."_Strength"
 
 	-- Load coins from DataStore
 	local success, data = pcall(function()
@@ -227,6 +256,11 @@ local function OnPlayerAdded(player)
 	-- Load rebirths from DataStore
 	local success3, data3 = pcall(function()
 		return DataStore3:GetAsync(plr_key3)
+	end)
+	
+	-- Load strength from DataStore
+	local success4, data4 = pcall(function()
+		return DataStore4:GetAsync(plr_key4)
 	end)
 
 	-- Create leaderstats folder for displaying formatted versions
@@ -279,6 +313,25 @@ local function OnPlayerAdded(player)
 	rebirths.Changed:Connect(function()
 		rebirthsDisplay.Value = rebirths.Value
 	end)
+	
+	-- Raw strength value stored on player (not in leaderstats) for calculations
+	local strength = Instance.new("IntValue")
+	strength.Name = "Strength"
+	strength.Parent = player
+	if success4 then
+		strength.Value = data4 or 0
+	end
+
+	-- Formatted strength display in leaderstats
+	local strengthDisplay = Instance.new("StringValue")
+	strengthDisplay.Name = "Strength"
+	strengthDisplay.Parent = stats
+	strengthDisplay.Value = formatStrength(strength.Value)
+
+	-- Auto-update formatted display whenever strength changes
+	strength.Changed:Connect(function()
+		strengthDisplay.Value = formatStrength(strength.Value)
+	end)
 
 	-- Increment time spent every 1 second in background
 	task.spawn(function()
@@ -294,11 +347,13 @@ local function OnPlayerRemoving(player)
 	local plr_key = "id_"..player.UserId.."_Coins"
 	local plr_key2 = "id_"..player.UserId.."_Time Played"
 	local plr_key3 = "id_"..player.UserId.."_Rebirths"
+	local plr_key4 = "id_"..player.UserId.."_Strength"
 
-	-- Get raw coin, time, and rebirths values from the player
+	-- Get raw coin, time, rebirths, and strength values from the player
 	local coins = player:FindFirstChild("Coins")
 	local timeSpent = player:FindFirstChild("Time Played")
 	local rebirths = player:FindFirstChild("Rebirths")
+	local strength = player:FindFirstChild("Strength")
 
 	-- Save all values to their respective DataStores
 	local success, result = pcall(function()
@@ -310,6 +365,9 @@ local function OnPlayerRemoving(player)
 		end
 		if rebirths then
 			DataStore3:SetAsync(plr_key3, rebirths.Value)
+		end
+		if strength then
+			DataStore4:SetAsync(plr_key4, strength.Value)
 		end
 	end)
 
@@ -324,11 +382,13 @@ local function OnServerShutdown()
 		local plr_key = "id_"..player.UserId.."_Coins"
 		local plr_key2 = "id_"..player.UserId.."_Time Played"
 		local plr_key3 = "id_"..player.UserId.."_Rebirths"
+		local plr_key4 = "id_"..player.UserId.."_Strength"
 
-		-- Get raw coin, time, and rebirths values from the player
+		-- Get raw coin, time, rebirths, and strength values from the player
 		local coins = player:FindFirstChild("Coins")
 		local timeSpent = player:FindFirstChild("Time Played")
 		local rebirths = player:FindFirstChild("Rebirths")
+		local strength = player:FindFirstChild("Strength")
 
 		-- Save all values to their respective DataStores
 		local success, result = pcall(function()
@@ -340,6 +400,9 @@ local function OnServerShutdown()
 			end
 			if rebirths then
 				DataStore3:SetAsync(plr_key3, rebirths.Value)
+			end
+			if strength then
+				DataStore4:SetAsync(plr_key4, strength.Value)
 			end
 		end)
 

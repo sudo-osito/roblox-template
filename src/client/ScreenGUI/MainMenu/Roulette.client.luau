@@ -20,11 +20,17 @@ end
 local RouletteGUI = SubMenus:WaitForChild("RouletteGUI")
 local closeRoulette = RouletteGUI:WaitForChild("CloseRoulette")
 
-RouletteButton.MouseButton1Click:Connect(function()
-    RouletteGUI.Visible = true
+RouletteGUI.Visible = false
+
+RouletteButton.Activated:Connect(function()
+    if RouletteGUI.Visible == true then
+        RouletteGUI.Visible = false
+        return
+    else RouletteGUI.Visible = true
+    end
 end)
 
-closeRoulette.MouseButton1Click:Connect(function()
+closeRoulette.Activated:Connect(function()
     RouletteGUI.Visible = false
 end)
 

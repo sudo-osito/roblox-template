@@ -6,16 +6,19 @@ local DSS = game:GetService("DataStoreService")
 local CoinsDataStore = DSS:GetOrderedDataStore("CoinsBoard1")
 local TimeDataStore = DSS:GetOrderedDataStore("TimeSpentBoard1")
 local RebirthsDataStore = DSS:GetOrderedDataStore("RebirthsBoard1")
+local StrengthDataStore = DSS:GetOrderedDataStore("StrengthBoard1")
 
 --// Cache storage (updates every 60 seconds)
 local leaderboardCache = {
 	coins = {},
 	time = {},
 	rebirths = {},
+	strength = {},
 	lastUpdate = {
 		coins = 0,
 		time = 0,
-		rebirths = 0
+		rebirths = 0,
+		strength = 0
 	}
 }
 
@@ -63,6 +66,20 @@ end
 function Manager.getTop1RebirthPlayer()
 	if #leaderboardCache.rebirths > 0 then
 		return leaderboardCache.rebirths[1].UserId
+	end
+	return nil
+end
+
+-- Get cached strength leaderboard (top 50)
+-- Returns the cached data without making a new DataStore request
+function Manager.getStrengthLeaderboard()
+	return leaderboardCache.strength
+end
+
+-- Get top 1 player by strength (returns userId or nil)
+function Manager.getTop1StrengthPlayer()
+	if #leaderboardCache.strength > 0 then
+		return leaderboardCache.strength[1].UserId
 	end
 	return nil
 end
@@ -190,6 +207,47 @@ local function fetchRebirthsLeaderboard()
 	print("[DATASTORE_MANAGER] Updated rebirths leaderboard cache (" .. #newCache .. " players)")
 end
 
+-- Fetch top 50 from DataStore and cache it
+local function fetchStrengthLeaderboard()
+	local success, pages = pcall(function()
+		return StrengthDataStore:GetSortedAsync(false, 50)
+	end)
+	
+	if not success then
+		warn("[DATASTORE_MANAGER] Failed to fetch strength leaderboard: " .. tostring(pages))
+		return
+	end
+	
+	local top50 = pages:GetCurrentPage()
+	local newCache = {}
+	
+	for rank, data in ipairs(top50) do
+		local userId = tonumber(data.key:split('_')[2])
+		local strength = data.value
+		
+		-- Get player name
+		local playerName = "Unknown"
+		local nameSuccess, nameResult = pcall(function()
+			return game:GetService("Players"):GetNameFromUserIdAsync(userId)
+		end)
+		
+		if nameSuccess and nameResult then
+			playerName = nameResult
+		end
+		
+		table.insert(newCache, {
+			Rank = rank,
+			Player = playerName,
+			UserId = userId,
+			Strength = strength
+		})
+	end
+	
+	leaderboardCache.strength = newCache
+	leaderboardCache.lastUpdate.strength = tick()
+	print("[DATASTORE_MANAGER] Updated strength leaderboard cache (" .. #newCache .. " players)")
+end
+
 --// Main Update Loop: Fetch leaderboards every 60 seconds (staggered to avoid queue buildup)
 task.spawn(function()
 	-- Initial fetch
@@ -198,17 +256,21 @@ task.spawn(function()
 	fetchTimeLeaderboard()
 	task.wait(2)
 	fetchRebirthsLeaderboard()
+	task.wait(2)
+	fetchStrengthLeaderboard()
 	
 	while true do
 		task.wait(60)
 		
-		-- Fetch coins first, wait a moment, then fetch time, then rebirths
+		-- Fetch coins first, wait a moment, then fetch time, rebirths, then strength
 		-- This prevents simultaneous DataStore requests
 		fetchCoinsLeaderboard()
 		task.wait(2)
 		fetchTimeLeaderboard()
 		task.wait(2)
 		fetchRebirthsLeaderboard()
+		task.wait(2)
+		fetchStrengthLeaderboard()
 	end
 end)
 

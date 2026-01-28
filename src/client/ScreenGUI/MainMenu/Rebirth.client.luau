@@ -21,10 +21,18 @@ end
 local RebirthGUI = SubMenus:WaitForChild("RebirthGUI")
 local closeRebirthGUI = RebirthGUI:WaitForChild("CloseRebirth")
 
-RebirthButton.MouseButton1Click:Connect(function()
-    RebirthGUI.Visible = true
+RebirthGUI.Visible = false
+
+RebirthButton.Activated:Connect(function()
+    if RebirthGUI.Visible == true then
+        RebirthGUI.Visible = false
+        return
+    else RebirthGUI.Visible = true
+    end
 end)
 
-closeRebirthGUI.MouseButton1Click:Connect(function()
+closeRebirthGUI.Activated:Connect(function()
     RebirthGUI.Visible = false
 end)
+
+-- // HERE STARTS THE FUN PART \\ -- MONEY 
