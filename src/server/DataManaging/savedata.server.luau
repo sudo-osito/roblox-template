@@ -354,12 +354,20 @@ local function OnPlayerAdded(player)
 	if success5 then
 		robuxSpent.Value = data5 or 0
 	end
+	
+	-- Session time value stored on player (NOT saved or loaded, resets each server)
+	-- Tracks how long the player has been in this server session
+	local sessionTime = Instance.new("IntValue")
+	sessionTime.Name = "Session Time"
+	sessionTime.Parent = player
+	sessionTime.Value = 0
 
 	-- Increment time spent every 1 second in background
 	task.spawn(function()
 		while player.Parent do
 			task.wait(1)
 			timeSpent.Value = timeSpent.Value + 1
+			sessionTime.Value = sessionTime.Value + 1
 		end
 	end)
 end

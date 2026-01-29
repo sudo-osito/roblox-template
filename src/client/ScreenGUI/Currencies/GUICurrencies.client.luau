@@ -45,3 +45,14 @@ updateCoinsDisplay()
 
 -- Update whenever coins change
 coins.Changed:Connect(updateCoinsDisplay)
+
+local BuyCoinsButton = CurrenciesGUI.ScreenGui.Coins:WaitForChild("buyCoinsButton")
+
+local StoreGUI = player.PlayerGui.SubMenus:WaitForChild("StoreGUI")
+
+BuyCoinsButton.Activated:Connect(function()
+	if StoreGUI.Visible == true then
+		StoreGUI.Visible = false
+	else StoreGUI.Visible = true
+	end
+end)

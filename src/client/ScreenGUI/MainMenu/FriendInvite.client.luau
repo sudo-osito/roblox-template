@@ -54,7 +54,7 @@ end)
 
 Players.PlayerRemoving:Connect(updateFriendBonus)
 
-InviteFriendButton.MouseButton1Click:Connect(function()
+InviteFriendButton.Activated:Connect(function()
     pcall(function()
         SocialService:PromptGameInvite(player)
     end)
