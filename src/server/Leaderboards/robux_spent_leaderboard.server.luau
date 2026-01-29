@@ -2,7 +2,7 @@
 local DSS = game:GetService("DataStoreService")
 local LeaderboardAnimationManager = require(game.ReplicatedStorage.Shared.LeaderboardAnimationManager)
 -- Retrieve the ordered DataStore that tracks all players' robux spent (sorted highest to lowest)
-local DataStore = DSS:GetOrderedDataStore("RobuxSpentBoard1")
+local DataStore = DSS:GetOrderedDataStore("RobuxSpentBoard2")
 
 --// Functions
 -- Formats numbers with comma separators (e.g., 1000000 -> "1,000,000")

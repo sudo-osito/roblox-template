@@ -2,7 +2,7 @@
 local DSS = game:GetService("DataStoreService")
 local LeaderboardAnimationManager = require(game.ReplicatedStorage.Shared.LeaderboardAnimationManager)
 -- Retrieve the ordered DataStore that tracks all players' time spent (sorted highest to lowest)
-local DataStore = DSS:GetOrderedDataStore("TimeSpentBoard1")
+local DataStore = DSS:GetOrderedDataStore("TimeSpentBoard2")
 
 
 --// Functions

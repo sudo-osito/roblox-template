@@ -21,9 +21,7 @@ button.Touched:Connect(function(hit)
 	if not strength then return end
 
 	-- Add 50 coins (formatted display will automatically update via the Changed connection in savedata.lua)
-	rebirths.Value += 1
-	strength.Value += 10
-	task.wait(1)
+
 	
 	
 end)

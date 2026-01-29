@@ -2,7 +2,7 @@
 local DSS = game:GetService("DataStoreService")
 local LeaderboardAnimationManager = require(game.ReplicatedStorage.Shared.LeaderboardAnimationManager)
 -- Retrieve the ordered DataStore that tracks all players' strength (sorted highest to lowest)
-local DataStore = DSS:GetOrderedDataStore("StrengthBoard1")
+local DataStore = DSS:GetOrderedDataStore("StrengthBoard2")
 
 --// Functions
 -- Formats large strength amounts into readable abbreviations

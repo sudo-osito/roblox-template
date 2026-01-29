@@ -3,11 +3,11 @@
 --// Batches requests to prevent queue buildup
 
 local DSS = game:GetService("DataStoreService")
-local CoinsDataStore = DSS:GetOrderedDataStore("CoinsBoard1")
-local TimeDataStore = DSS:GetOrderedDataStore("TimeSpentBoard1")
-local RebirthsDataStore = DSS:GetOrderedDataStore("RebirthsBoard1")
-local StrengthDataStore = DSS:GetOrderedDataStore("StrengthBoard1")
-local RobuxSpentDataStore = DSS:GetOrderedDataStore("RobuxSpentBoard1")
+local CoinsDataStore = DSS:GetOrderedDataStore("CoinsBoard2")
+local TimeDataStore = DSS:GetOrderedDataStore("TimeSpentBoard2")
+local RebirthsDataStore = DSS:GetOrderedDataStore("RebirthsBoard2")
+local StrengthDataStore = DSS:GetOrderedDataStore("StrengthBoard2")
+local RobuxSpentDataStore = DSS:GetOrderedDataStore("RobuxSpentBoard2")
 
 --// Cache storage (updates every 60 seconds)
 local leaderboardCache = {

@@ -11,6 +11,7 @@ local PRODUCTS = {
 	[3524350377] = {coins = 1000000, robux = 649, name = "1m Coins"},
 	[1693043785] = {coins = 2000, robux = 9, name = "Starter Pack"},
 	[1692813873] = {coins = 6000, robux = 39, name = "Pro Starter Pack"},
+	[3525290187] = {skipRebirth = true, robux = 29, name = "Skip Rebirth"},
 }
 
 -- ProcessReceipt callback function
@@ -36,6 +37,32 @@ local function processReceipt(receiptInfo)
 	if not coins then
 		warn("Player " .. player.Name .. " does not have Coins stat!")
 		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	
+	-- Handle skip rebirth product
+	if productData.skipRebirth then
+		local rebirths = player:FindFirstChild("Rebirths")
+		if rebirths then
+			-- Reset coins and strength to 0
+			coins.Value = 0
+			local strength = player:FindFirstChild("Strength")
+			if strength then
+				strength.Value = 0
+			end
+			
+			-- Increment rebirth count (MaxCoins and MaxStrength stay unchanged)
+			rebirths.Value = rebirths.Value + 1
+			
+			print(player.Name .. " used Skip Rebirth! Now has " .. rebirths.Value .. " rebirths")
+		end
+		
+		-- Track robux spent
+		local robuxSpent = player:FindFirstChild("Robux Spent")
+		if robuxSpent and productData.robux then
+			robuxSpent.Value = robuxSpent.Value + productData.robux
+		end
+		
+		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
 	
 	-- Grant the coins WITHOUT multipliers (purchased coins should not be multiplied)

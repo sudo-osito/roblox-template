@@ -1,16 +1,16 @@
 --// Services
 local Players = game:GetService("Players")
 local DSS = game:GetService("DataStoreService")
--- CoinsBoard1: Stores player coin amounts (sorted highest to lowest for leaderboard)
-local DataStore = DSS:GetOrderedDataStore("CoinsBoard1")
--- TimeSpentBoard1: Stores player time spent amounts (sorted highest to lowest for leaderboard)
-local DataStore2 = DSS:GetOrderedDataStore("TimeSpentBoard1")
--- RebirthsBoard1: Stores player rebirth counts (sorted highest to lowest for leaderboard)
-local DataStore3 = DSS:GetOrderedDataStore("RebirthsBoard1")
--- StrengthBoard1: Stores player strength amounts (sorted highest to lowest for leaderboard)
-local DataStore4 = DSS:GetOrderedDataStore("StrengthBoard1")
--- RobuxSpentBoard1: Stores player robux spent amounts (sorted highest to lowest for leaderboard)
-local DataStore5 = DSS:GetOrderedDataStore("RobuxSpentBoard1")
+-- CoinsBoard2: Stores player coin amounts (sorted highest to lowest for leaderboard)
+local DataStore = DSS:GetOrderedDataStore("CoinsBoard2")
+-- TimeSpentBoard2: Stores player time spent amounts (sorted highest to lowest for leaderboard)
+local DataStore2 = DSS:GetOrderedDataStore("TimeSpentBoard2")
+-- RebirthsBoard2: Stores player rebirth counts (sorted highest to lowest for leaderboard)
+local DataStore3 = DSS:GetOrderedDataStore("RebirthsBoard2")
+-- StrengthBoard2: Stores player strength amounts (sorted highest to lowest for leaderboard)
+local DataStore4 = DSS:GetOrderedDataStore("StrengthBoard2")
+-- RobuxSpentBoard2: Stores player robux spent amounts (sorted highest to lowest for leaderboard)
+local DataStore5 = DSS:GetOrderedDataStore("RobuxSpentBoard2")
 
 --// Functions
 -- Converts seconds into a readable time format (e.g., 3661 -> "1h 1m")
@@ -188,15 +188,15 @@ local function PeriodicSaveData()
 		local plr_key5 = "id_"..player.UserId.."_Robux Spent"
 
 		-- Get raw coin, time, rebirths, strength, and robux spent values
-		local coins = player:FindFirstChild("Coins")
+		local maxCoins = player:FindFirstChild("MaxCoins")
 		local timeSpent = player:FindFirstChild("Time Played")
 		local rebirths = player:FindFirstChild("Rebirths")
-		local strength = player:FindFirstChild("Strength")
+		local maxStrength = player:FindFirstChild("MaxStrength")
 		local robuxSpent = player:FindFirstChild("Robux Spent")
 
 		local success, result = pcall(function()
-			if coins then
-				DataStore:SetAsync(plr_key, coins.Value)
+			if maxCoins then
+				DataStore:SetAsync(plr_key, maxCoins.Value)  -- Save MAX coins to leaderboard
 			end
 			if timeSpent then
 				DataStore2:SetAsync(plr_key2, timeSpent.Value)
@@ -204,8 +204,8 @@ local function PeriodicSaveData()
 			if rebirths then
 				DataStore3:SetAsync(plr_key3, rebirths.Value)
 			end
-			if strength then
-				DataStore4:SetAsync(plr_key4, strength.Value)
+			if maxStrength then
+				DataStore4:SetAsync(plr_key4, maxStrength.Value)  -- Save MAX strength to leaderboard
 			end
 			if robuxSpent then
 				DataStore5:SetAsync(plr_key5, robuxSpent.Value)
@@ -289,6 +289,12 @@ local function OnPlayerAdded(player)
 		coins.Value = data or 0 
 	end
 
+	-- Max coins value (tracks highest coins ever reached, saved to leaderboard)
+	local maxCoins = Instance.new("IntValue")
+	maxCoins.Name = "MaxCoins"
+	maxCoins.Parent = player
+	maxCoins.Value = data or 0  -- Start with same value as coins
+
 	-- Formatted coins display in leaderstats (shows "1.5k" instead of 1500)
 	local coinsDisplay = Instance.new("StringValue")
 	coinsDisplay.Name = "Coins"
@@ -296,8 +302,12 @@ local function OnPlayerAdded(player)
 	coinsDisplay.Value = formatCoins(coins.Value)
 
 	-- Auto-update formatted display whenever raw coins change
+	-- Also update maxCoins if current exceeds it
 	coins.Changed:Connect(function()
 		coinsDisplay.Value = formatCoins(coins.Value)
+		if coins.Value > maxCoins.Value then
+			maxCoins.Value = coins.Value
+		end
 	end)
 
 	-- Raw time value stored on player (not in leaderstats) for calculations
@@ -335,6 +345,12 @@ local function OnPlayerAdded(player)
 		strength.Value = data4 or 0
 	end
 
+	-- Max strength value (tracks highest strength ever reached, saved to leaderboard)
+	local maxStrength = Instance.new("IntValue")
+	maxStrength.Name = "MaxStrength"
+	maxStrength.Parent = player
+	maxStrength.Value = data4 or 0  -- Start with same value as strength
+
 	-- Formatted strength display in leaderstats
 	local strengthDisplay = Instance.new("StringValue")
 	strengthDisplay.Name = "Strength"
@@ -342,8 +358,12 @@ local function OnPlayerAdded(player)
 	strengthDisplay.Value = formatStrength(strength.Value)
 
 	-- Auto-update formatted display whenever strength changes
+	-- Also update maxStrength if current exceeds it
 	strength.Changed:Connect(function()
 		strengthDisplay.Value = formatStrength(strength.Value)
+		if strength.Value > maxStrength.Value then
+			maxStrength.Value = strength.Value
+		end
 	end)
 	
 	-- Raw robux spent value stored on player (NOT in leaderstats, hidden from display)
@@ -381,16 +401,16 @@ local function OnPlayerRemoving(player)
 	local plr_key5 = "id_"..player.UserId.."_Robux Spent"
 
 	-- Get raw coin, time, rebirths, strength, and robux spent values from the player
-	local coins = player:FindFirstChild("Coins")
+	local maxCoins = player:FindFirstChild("MaxCoins")
 	local timeSpent = player:FindFirstChild("Time Played")
 	local rebirths = player:FindFirstChild("Rebirths")
-	local strength = player:FindFirstChild("Strength")
+	local maxStrength = player:FindFirstChild("MaxStrength")
 	local robuxSpent = player:FindFirstChild("Robux Spent")
 
 	-- Save all values to their respective DataStores
 	local success, result = pcall(function()
-		if coins then
-			DataStore:SetAsync(plr_key, coins.Value)
+		if maxCoins then
+			DataStore:SetAsync(plr_key, maxCoins.Value)  -- Save MAX coins to leaderboard
 		end
 		if timeSpent then
 			DataStore2:SetAsync(plr_key2, timeSpent.Value)
@@ -398,8 +418,8 @@ local function OnPlayerRemoving(player)
 		if rebirths then
 			DataStore3:SetAsync(plr_key3, rebirths.Value)
 		end
-		if strength then
-			DataStore4:SetAsync(plr_key4, strength.Value)
+		if maxStrength then
+			DataStore4:SetAsync(plr_key4, maxStrength.Value)  -- Save MAX strength to leaderboard
 		end
 		if robuxSpent then
 			DataStore5:SetAsync(plr_key5, robuxSpent.Value)
@@ -421,16 +441,16 @@ local function OnServerShutdown()
 		local plr_key5 = "id_"..player.UserId.."_Robux Spent"
 
 		-- Get raw coin, time, rebirths, strength, and robux spent values from the player
-		local coins = player:FindFirstChild("Coins")
+		local maxCoins = player:FindFirstChild("MaxCoins")
 		local timeSpent = player:FindFirstChild("Time Played")
 		local rebirths = player:FindFirstChild("Rebirths")
-		local strength = player:FindFirstChild("Strength")
+		local maxStrength = player:FindFirstChild("MaxStrength")
 		local robuxSpent = player:FindFirstChild("Robux Spent")
 
 		-- Save all values to their respective DataStores
 		local success, result = pcall(function()
-			if coins then
-				DataStore:SetAsync(plr_key, coins.Value)
+			if maxCoins then
+				DataStore:SetAsync(plr_key, maxCoins.Value)  -- Save MAX coins to leaderboard
 			end
 			if timeSpent then
 				DataStore2:SetAsync(plr_key2, timeSpent.Value)
@@ -438,8 +458,8 @@ local function OnServerShutdown()
 			if rebirths then
 				DataStore3:SetAsync(plr_key3, rebirths.Value)
 			end
-			if strength then
-				DataStore4:SetAsync(plr_key4, strength.Value)
+			if maxStrength then
+				DataStore4:SetAsync(plr_key4, maxStrength.Value)  -- Save MAX strength to leaderboard
 			end
 			if robuxSpent then
 				DataStore5:SetAsync(plr_key5, robuxSpent.Value)

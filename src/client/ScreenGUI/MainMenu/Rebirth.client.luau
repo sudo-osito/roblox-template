@@ -36,3 +36,23 @@ closeRebirthGUI.Activated:Connect(function()
 end)
 
 -- // HERE STARTS THE FUN PART \\ -- MONEY 
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
+local RebirthButton = RebirthGUI:WaitForChild("RebirthInvisButton")
+local SkipRebirthButton = RebirthGUI:WaitForChild("SkipRebirthInvisButton")
+
+local SKIP_REBIRTH_PRODUCT_ID = 3525290187
+
+RebirthButton.Activated:Connect(function()
+    local RebirthEvent = ReplicatedStorage:WaitForChild("Shared"):WaitForChild("RemoteEvents"):WaitForChild("RebirthRequest")
+    RebirthEvent:FireServer()
+end)
+
+SkipRebirthButton.Activated:Connect(function()
+    -- Prompt purchase of skip rebirth product
+    MarketplaceService:PromptProductPurchase(player, SKIP_REBIRTH_PRODUCT_ID)
+end)
+
+
+

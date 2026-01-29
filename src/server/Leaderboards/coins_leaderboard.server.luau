@@ -2,7 +2,7 @@
 local DSS = game:GetService("DataStoreService")
 local LeaderboardAnimationManager = require(game.ReplicatedStorage.Shared.LeaderboardAnimationManager)
 -- Retrieve the ordered DataStore that tracks all players' coins (sorted highest to lowest)
-local DataStore = DSS:GetOrderedDataStore("CoinsBoard1")
+local DataStore = DSS:GetOrderedDataStore("CoinsBoard2")
 
 
 --// Functions
