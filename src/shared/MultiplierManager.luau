@@ -116,6 +116,26 @@ function MultiplierManager.checkRebirthMultiplier(player)
     return 1 + (rebirths.Value * REBIRTH_MULTIPLIER_PER_LEVEL)
 end
 
+function MultiplierManager.checkFriendMultiplier(player)
+    local friendsInGame = 0
+    
+    -- Count friends currently in the server
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player then
+            local success, isFriend = pcall(function()
+                return player:IsFriendsWithAsync(otherPlayer.UserId)
+            end)
+            
+            if success and isFriend then
+                friendsInGame = friendsInGame + 1
+            end
+        end
+    end
+    
+    -- 15% bonus per friend (0.15 * friends)
+    return 1 + (friendsInGame * 0.15)
+end
+
 function MultiplierManager.checkGlobalMultiplier(player)
     local multiplier = 1
     
@@ -127,14 +147,15 @@ end
 
 function MultiplierManager.calculateGain(player, baseAmount, gainType)
     local globalMult = MultiplierManager.checkGlobalMultiplier(player)
+    local friendMult = MultiplierManager.checkFriendMultiplier(player)
     
     if gainType == "Coins" then
         local coinMult = MultiplierManager.checkCoinMultiplier(player)
         local rebirthMult = MultiplierManager.checkRebirthMultiplier(player)
-        return math.floor(baseAmount * coinMult * rebirthMult * globalMult)
+        return math.floor(baseAmount * coinMult * rebirthMult * friendMult * globalMult)
     elseif gainType == "Strength" then
         local strengthMult = MultiplierManager.checkStrengthMultiplier(player)
-        return math.floor(baseAmount * strengthMult * globalMult)
+        return math.floor(baseAmount * strengthMult * friendMult * globalMult)
     end
     
     return baseAmount
@@ -145,15 +166,17 @@ function MultiplierManager.getAllMultipliers(player)
     local coinMult = MultiplierManager.checkCoinMultiplier(player)
     local strengthMult = MultiplierManager.checkStrengthMultiplier(player)
     local rebirthMult = MultiplierManager.checkRebirthMultiplier(player)
+    local friendMult = MultiplierManager.checkFriendMultiplier(player)
     local globalMult = MultiplierManager.checkGlobalMultiplier(player)
     
     return {
         Coin = coinMult,
         Strength = strengthMult,
         Rebirth = rebirthMult,
+        Friend = friendMult,
         Global = globalMult,
-        TotalCoin = coinMult * rebirthMult * globalMult,
-        TotalStrength = strengthMult * globalMult,
+        TotalCoin = coinMult * rebirthMult * friendMult * globalMult,
+        TotalStrength = strengthMult * friendMult * globalMult,
     }
 end
 

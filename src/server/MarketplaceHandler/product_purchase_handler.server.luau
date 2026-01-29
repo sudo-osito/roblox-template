@@ -38,8 +38,20 @@ local function processReceipt(receiptInfo)
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	
-	-- Grant the coins (this will automatically update the formatted display in leaderstats)
-	coins.Value = coins.Value + productData.coins
+	-- Grant the coins WITHOUT multipliers (purchased coins should not be multiplied)
+	-- Wait for AutoMultiplier to be available
+	local maxWait = 0
+	while not _G.AutoMultiplier and maxWait < 50 do
+		task.wait(0.1)
+		maxWait = maxWait + 1
+	end
+	
+	if _G.AutoMultiplier then
+		_G.AutoMultiplier.addCoinsRaw(player, productData.coins)
+	else
+		-- Fallback: add directly (shouldn't happen but just in case)
+		coins.Value = coins.Value + productData.coins
+	end
 	
 	-- Track robux spent for leaderboard
 	local robuxSpent = player:FindFirstChild("Robux Spent")

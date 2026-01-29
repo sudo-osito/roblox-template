@@ -5,6 +5,9 @@ local MultiplierManager = require(ReplicatedStorage.Shared.MultiplierManager)
 -- Track previous values to detect gains
 local previousValues = {}
 
+-- Track when we're bypassing multipliers (for purchases)
+local bypassMultiplier = {}
+
 local function setupAutoMultipliers(player)
     local userId = player.UserId
     
@@ -33,6 +36,13 @@ local function setupAutoMultipliers(player)
         local oldValue = previousValues[userId].coins
         local gain = newValue - oldValue
         
+        -- Check if this is a bypassed addition (purchased coins)
+        if bypassMultiplier[userId] and bypassMultiplier[userId].coins then
+            bypassMultiplier[userId].coins = false
+            previousValues[userId].coins = newValue
+            return
+        end
+        
         -- Only apply multiplier if it's a gain (positive difference)
         if gain > 0 then
             isApplyingMultiplier = true
@@ -59,6 +69,13 @@ local function setupAutoMultipliers(player)
         
         local oldValue = previousValues[userId].strength
         local gain = newValue - oldValue
+        
+        -- Check if this is a bypassed addition (purchased strength)
+        if bypassMultiplier[userId] and bypassMultiplier[userId].strength then
+            bypassMultiplier[userId].strength = false
+            previousValues[userId].strength = newValue
+            return
+        end
         
         -- Only apply multiplier if it's a gain (positive difference)
         if gain > 0 then
@@ -96,4 +113,39 @@ Players.PlayerAdded:Connect(setupAutoMultipliers)
 -- Cleanup on player leave
 Players.PlayerRemoving:Connect(function(player)
     previousValues[player.UserId] = nil
+    bypassMultiplier[player.UserId] = nil
 end)
+
+-- PUBLIC FUNCTIONS: Add coins/strength without multipliers (for purchases)
+local AutoMultiplier = {}
+
+function AutoMultiplier.addCoinsRaw(player, amount)
+    local userId = player.UserId
+    if not bypassMultiplier[userId] then
+        bypassMultiplier[userId] = {}
+    end
+    bypassMultiplier[userId].coins = true
+    
+    local coins = player:FindFirstChild("Coins")
+    if coins then
+        coins.Value = coins.Value + amount
+    end
+end
+
+function AutoMultiplier.addStrengthRaw(player, amount)
+    local userId = player.UserId
+    if not bypassMultiplier[userId] then
+        bypassMultiplier[userId] = {}
+    end
+    bypassMultiplier[userId].strength = true
+    
+    local strength = player:FindFirstChild("Strength")
+    if strength then
+        strength.Value = strength.Value + amount
+    end
+end
+
+-- Expose globally for other scripts
+_G.AutoMultiplier = AutoMultiplier
+
+return AutoMultiplier
