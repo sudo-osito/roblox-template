@@ -382,6 +382,13 @@ local function OnPlayerAdded(player)
 	sessionTime.Parent = player
 	sessionTime.Value = 0
 
+	-- Free spins value stored on player (NOT saved, resets each server)
+	-- Players start with 0 free spins, daily_free_spins handler grants them
+	local freeSpins = Instance.new("IntValue")
+	freeSpins.Name = "FreeSpins"
+	freeSpins.Parent = player
+	freeSpins.Value = 0  -- Start at 0, daily_free_spins will set the proper amount
+
 	-- Increment time spent every 1 second in background
 	task.spawn(function()
 		while player.Parent do

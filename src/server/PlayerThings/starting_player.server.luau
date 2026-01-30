@@ -28,3 +28,8 @@ end
 
 -- Handle new players
 players.PlayerAdded:Connect(onPlayerAdded)
+
+-- CUSTOM CURSOR SETUP =========================
+
+local mouse = game.Players.LocalPlayer:GetMouse()
+mouse.Icon = "rbxassetid://15318354406" 

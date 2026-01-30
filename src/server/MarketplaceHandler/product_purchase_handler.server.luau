@@ -12,6 +12,7 @@ local PRODUCTS = {
 	[1693043785] = {coins = 2000, robux = 9, name = "Starter Pack"},
 	[1692813873] = {coins = 6000, robux = 39, name = "Pro Starter Pack"},
 	[3525290187] = {skipRebirth = true, robux = 29, name = "Skip Rebirth"},
+	[3525842684] = {rouletteSpin = true, robux = 19, name = "Roulette Spin"},
 }
 
 -- ProcessReceipt callback function
@@ -61,6 +62,33 @@ local function processReceipt(receiptInfo)
 		if robuxSpent and productData.robux then
 			robuxSpent.Value = robuxSpent.Value + productData.robux
 		end
+		
+		return Enum.ProductPurchaseDecision.PurchaseGranted
+	end
+	
+	-- Handle roulette spin product
+	if productData.rouletteSpin then
+		-- Wait for RouletteHandler to be available
+		local maxWait = 0
+		while not _G.RouletteHandlePaidSpin and maxWait < 50 do
+			task.wait(0.1)
+			maxWait = maxWait + 1
+		end
+		
+		if _G.RouletteHandlePaidSpin then
+			_G.RouletteHandlePaidSpin(player)
+		else
+			warn("RouletteHandler not loaded! Cannot process paid spin")
+			return Enum.ProductPurchaseDecision.NotProcessedYet
+		end
+		
+		-- Track robux spent
+		local robuxSpent = player:FindFirstChild("Robux Spent")
+		if robuxSpent and productData.robux then
+			robuxSpent.Value = robuxSpent.Value + productData.robux
+		end
+		
+		print(player.Name .. " purchased a Roulette Spin!")
 		
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
