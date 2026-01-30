@@ -83,6 +83,7 @@ local REWARDS = {
 	{id = 9, time = 7200, text = Reward9Text, button = Reward9Button},     -- 2h
 	{id = 10, time = 8400, text = Reward10Text, button = Reward10Button},  -- 2h 20m
 	{id = 11, time = 9600, text = Reward11Text, button = Reward11Button},  -- 2h 40m
+	{id = 12, time = 10800, text = Reward12Text, button = Reward12Button}, -- 3h - VIP Reward
 }
 
 -- Track which rewards have been claimed this session

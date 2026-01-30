@@ -57,6 +57,12 @@ end
 local function calculateGamepassMultiplier(player, gamepasses)
     local highestMultiplier = 1
     
+    -- Check for reward VIP status first (grants 4x multiplier like VIP gamepass)
+    local rewardVIP = player:FindFirstChild("RewardVIP")
+    if rewardVIP and rewardVIP.Value == true then
+        highestMultiplier = 4  -- VIP gamepass multiplier value
+    end
+    
     for _, gamepass in ipairs(gamepasses) do
         if checkGamepassOwnership(player, gamepass.id) then
             -- Only keep the highest multiplier, don't stack them

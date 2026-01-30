@@ -42,6 +42,13 @@ local function calculateFreeSpins(player)
 	
 	print("[FREE SPINS] Calculating spins for " .. player.Name)
 	
+	-- Check for reward VIP status first
+	local rewardVIP = player:FindFirstChild("RewardVIP")
+	if rewardVIP and rewardVIP.Value == true then
+		highestBonus = 10  -- VIP gamepass bonus value
+		print("[FREE SPINS] Player has RewardVIP, starting with +10 bonus")
+	end
+	
 	-- Check each gamepass and find the highest bonus
 	for gamePassId, bonusSpins in pairs(GAMEPASS_BONUS_SPINS) do
 		local success, hasPass = pcall(function()

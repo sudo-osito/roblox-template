@@ -207,9 +207,6 @@ RouletteSpinEvent.OnClientEvent:Connect(function(responseType, randomNumber, fre
             -- Claim the prize from server
             RouletteClaimEvent:FireServer()
             
-            -- Reset spinning state
-            isSpinning = false
-            
             -- Find which prize was won for display
             local selectedPrize = nil
             for prizeName, prizeInfo in pairs(Prizes) do
@@ -230,6 +227,9 @@ RouletteSpinEvent.OnClientEvent:Connect(function(responseType, randomNumber, fre
             -- Reset to 0 for next spin
             wheel.Rotation = 0
             prizesLabels.Visible = true
+            
+            -- Reset spinning state AFTER everything is complete
+            isSpinning = false
         end)
     end
 end) 

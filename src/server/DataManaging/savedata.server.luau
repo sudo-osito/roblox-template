@@ -11,6 +11,8 @@ local DataStore3 = DSS:GetOrderedDataStore("RebirthsBoard2")
 local DataStore4 = DSS:GetOrderedDataStore("StrengthBoard2")
 -- RobuxSpentBoard2: Stores player robux spent amounts (sorted highest to lowest for leaderboard)
 local DataStore5 = DSS:GetOrderedDataStore("RobuxSpentBoard2")
+-- RewardVIP: Stores if player has earned VIP from rewards (permanent)
+local DataStore6 = DSS:GetDataStore("RewardVIP")
 
 --// Functions
 -- Converts seconds into a readable time format (e.g., 3661 -> "1h 1m")
@@ -186,13 +188,15 @@ local function PeriodicSaveData()
 		local plr_key3 = "id_"..player.UserId.."_Rebirths"
 		local plr_key4 = "id_"..player.UserId.."_Strength"
 		local plr_key5 = "id_"..player.UserId.."_Robux Spent"
+		local plr_key6 = "id_"..player.UserId.."_RewardVIP"
 
-		-- Get raw coin, time, rebirths, strength, and robux spent values
+		-- Get raw coin, time, rebirths, strength, robux spent, and reward VIP values
 		local maxCoins = player:FindFirstChild("MaxCoins")
 		local timeSpent = player:FindFirstChild("Time Played")
 		local rebirths = player:FindFirstChild("Rebirths")
 		local maxStrength = player:FindFirstChild("MaxStrength")
 		local robuxSpent = player:FindFirstChild("Robux Spent")
+		local rewardVIP = player:FindFirstChild("RewardVIP")
 
 		local success, result = pcall(function()
 			if maxCoins then
@@ -209,6 +213,9 @@ local function PeriodicSaveData()
 			end
 			if robuxSpent then
 				DataStore5:SetAsync(plr_key5, robuxSpent.Value)
+			end
+			if rewardVIP then
+				DataStore6:SetAsync(plr_key6, rewardVIP.Value)
 			end
 		end)
 
@@ -250,6 +257,7 @@ local function OnPlayerAdded(player)
 	local plr_key3 = "id_"..player.UserId.."_Rebirths"
 	local plr_key4 = "id_"..player.UserId.."_Strength"
 	local plr_key5 = "id_"..player.UserId.."_Robux Spent"
+	local plr_key6 = "id_"..player.UserId.."_RewardVIP"
 
 	-- Load coins from DataStore
 	local success, data = pcall(function()
@@ -274,6 +282,11 @@ local function OnPlayerAdded(player)
 	-- Load robux spent from DataStore
 	local success5, data5 = pcall(function()
 		return DataStore5:GetAsync(plr_key5)
+	end)
+
+	-- Load reward VIP status from DataStore
+	local success6, data6 = pcall(function()
+		return DataStore6:GetAsync(plr_key6)
 	end)
 
 	-- Create leaderstats folder for displaying formatted versions
@@ -389,6 +402,17 @@ local function OnPlayerAdded(player)
 	freeSpins.Parent = player
 	freeSpins.Value = 0  -- Start at 0, daily_free_spins will set the proper amount
 
+	-- Reward VIP status (SAVED permanently)
+	-- Granted by reward #12 (3 hours session time) and persists forever
+	local rewardVIP = Instance.new("BoolValue")
+	rewardVIP.Name = "RewardVIP"
+	rewardVIP.Parent = player
+	if success6 then
+		rewardVIP.Value = data6 or false
+	else
+		rewardVIP.Value = false
+	end
+
 	-- Increment time spent every 1 second in background
 	task.spawn(function()
 		while player.Parent do
@@ -406,13 +430,15 @@ local function OnPlayerRemoving(player)
 	local plr_key3 = "id_"..player.UserId.."_Rebirths"
 	local plr_key4 = "id_"..player.UserId.."_Strength"
 	local plr_key5 = "id_"..player.UserId.."_Robux Spent"
+	local plr_key6 = "id_"..player.UserId.."_RewardVIP"
 
-	-- Get raw coin, time, rebirths, strength, and robux spent values from the player
+	-- Get raw coin, time, rebirths, strength, robux spent, and reward VIP values from the player
 	local maxCoins = player:FindFirstChild("MaxCoins")
 	local timeSpent = player:FindFirstChild("Time Played")
 	local rebirths = player:FindFirstChild("Rebirths")
 	local maxStrength = player:FindFirstChild("MaxStrength")
 	local robuxSpent = player:FindFirstChild("Robux Spent")
+	local rewardVIP = player:FindFirstChild("RewardVIP")
 
 	-- Save all values to their respective DataStores
 	local success, result = pcall(function()
@@ -431,6 +457,9 @@ local function OnPlayerRemoving(player)
 		if robuxSpent then
 			DataStore5:SetAsync(plr_key5, robuxSpent.Value)
 		end
+		if rewardVIP then
+			DataStore6:SetAsync(plr_key6, rewardVIP.Value)
+		end
 	end)
 
 	if not success then 
@@ -446,13 +475,15 @@ local function OnServerShutdown()
 		local plr_key3 = "id_"..player.UserId.."_Rebirths"
 		local plr_key4 = "id_"..player.UserId.."_Strength"
 		local plr_key5 = "id_"..player.UserId.."_Robux Spent"
+		local plr_key6 = "id_"..player.UserId.."_RewardVIP"
 
-		-- Get raw coin, time, rebirths, strength, and robux spent values from the player
+		-- Get raw coin, time, rebirths, strength, robux spent, and reward VIP values from the player
 		local maxCoins = player:FindFirstChild("MaxCoins")
 		local timeSpent = player:FindFirstChild("Time Played")
 		local rebirths = player:FindFirstChild("Rebirths")
 		local maxStrength = player:FindFirstChild("MaxStrength")
 		local robuxSpent = player:FindFirstChild("Robux Spent")
+		local rewardVIP = player:FindFirstChild("RewardVIP")
 
 		-- Save all values to their respective DataStores
 		local success, result = pcall(function()
@@ -470,6 +501,9 @@ local function OnServerShutdown()
 			end
 			if robuxSpent then
 				DataStore5:SetAsync(plr_key5, robuxSpent.Value)
+			end
+			if rewardVIP then
+				DataStore6:SetAsync(plr_key6, rewardVIP.Value)
 			end
 		end)
 

@@ -33,6 +33,7 @@ local REWARD_CONFIG = {
 	[9] = {time = 7200, coins = 140000, strength = 0},    -- 2h: 140000 coins
 	[10] = {time = 8400, coins = 0, strength = 3000},     -- 2h 20m: 3000 strength
 	[11] = {time = 9600, coins = 0, strength = 6000},     -- 2h 40m: 6000 strength
+	[12] = {time = 10800, coins = 0, strength = 0, grantVIP = true}, -- 3h: VIP Perks
 }
 
 -- Track claimed rewards per player (session-based, not saved)
@@ -99,6 +100,15 @@ local function processRewardClaim(player, rewardId)
 		else
 			-- Fallback: direct add
 			strength.Value = strength.Value + rewardData.strength
+		end
+	end
+	
+	-- Grant VIP perks if this is the VIP reward
+	if rewardData.grantVIP then
+		local rewardVIP = player:FindFirstChild("RewardVIP")
+		if rewardVIP then
+			rewardVIP.Value = true
+			print(player.Name .. " has been granted permanent VIP perks!")
 		end
 	end
 	
