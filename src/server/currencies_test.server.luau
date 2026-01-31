@@ -22,6 +22,7 @@ button.Touched:Connect(function(hit)
 
 	-- Add 50 coins (formatted display will automatically update via the Changed connection in savedata.lua)
 
-	
+	coins.Value = coins.Value + 50
+	strength.Value = strength.Value + 10
 	
 end)

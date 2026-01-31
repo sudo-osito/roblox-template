@@ -10,12 +10,20 @@ MultiplierManager.initializePlayer(player)
 local CoinMultiplierText = player.PlayerGui:WaitForChild("ScreenGui").PlayerMultipliers.CoinMultiplier:WaitForChild("MultiplierText")
 local StrengthMultiplierText = player.PlayerGui.ScreenGui.PlayerMultipliers.StrengthMultiplier:WaitForChild("MultiplierText")
 
+-- Track event multipliers (updated by server)
+local eventCoinMultiplier = 1
+local eventStrengthMultiplier = 1
+
 -- Function to update the displayed multipliers
 local function updateMultipliers()
 	local multipliers = MultiplierManager.getAllMultipliers(player)
 	
-	CoinMultiplierText.Text = "x" .. tostring(multipliers.TotalCoin)
-	StrengthMultiplierText.Text = "x" .. tostring(multipliers.TotalStrength)
+	-- Apply event multipliers on top of everything
+	local totalCoinMult = multipliers.TotalCoin * eventCoinMultiplier
+	local totalStrengthMult = multipliers.TotalStrength * eventStrengthMultiplier
+	
+	CoinMultiplierText.Text = "x" .. tostring(totalCoinMult)
+	StrengthMultiplierText.Text = "x" .. tostring(totalStrengthMult)
 end
 
 -- Initial update
@@ -38,6 +46,34 @@ MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(purchaser, ga
 		MultiplierManager.initializePlayer(player)
 		updateMultipliers()
 	end
+end)
+
+-- Listen for event notifications (updates event multipliers)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local RemoteEvents = Shared:WaitForChild("RemoteEvents")
+local EventNotification = RemoteEvents:WaitForChild("EventNotification")
+
+EventNotification.OnClientEvent:Connect(function(message, isEnding)
+	-- Parse event multipliers from the message
+	if message:find("DOUBLE COINS") then
+		eventCoinMultiplier = 2
+		eventStrengthMultiplier = 1
+	elseif message:find("TRIPLE COINS") then
+		eventCoinMultiplier = 3
+		eventStrengthMultiplier = 1
+	elseif message:find("DOUBLE STRENGTH") then
+		eventCoinMultiplier = 1
+		eventStrengthMultiplier = 2
+	elseif message:find("SUPER EVENT") then
+		eventCoinMultiplier = 2
+		eventStrengthMultiplier = 2
+	elseif isEnding then
+		-- Event ended, reset multipliers
+		eventCoinMultiplier = 1
+		eventStrengthMultiplier = 1
+	end
+	
+	updateMultipliers()
 end)
 
 -- Periodic update every 5 seconds as fallback (catches any missed changes)

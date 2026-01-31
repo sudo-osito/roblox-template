@@ -142,18 +142,25 @@ function MultiplierManager.checkFriendMultiplier(player)
     return 1 + (friendsInGame * 0.15)
 end
 
-function MultiplierManager.checkGlobalMultiplier(player)
+function MultiplierManager.checkGlobalMultiplier(player, gainType)
     local multiplier = 1
     
-    -- Add your global multiplier logic here (events, VIP, etc.)
-    -- Example: if isDoubleWeekend then multiplier *= 2 end
+    -- Check for active event multipliers
+    if _G.EventMultipliers then
+        local eventMults = _G.EventMultipliers.getMultipliers()
+        if gainType == "Coins" then
+            multiplier = multiplier * eventMults.coin
+        elseif gainType == "Strength" then
+            multiplier = multiplier * eventMults.strength
+        end
+    end
     
     return multiplier
 end
 
 function MultiplierManager.calculateGain(player, baseAmount, gainType)
-    local globalMult = MultiplierManager.checkGlobalMultiplier(player)
     local friendMult = MultiplierManager.checkFriendMultiplier(player)
+    local globalMult = MultiplierManager.checkGlobalMultiplier(player, gainType)
     
     if gainType == "Coins" then
         local coinMult = MultiplierManager.checkCoinMultiplier(player)
@@ -173,16 +180,18 @@ function MultiplierManager.getAllMultipliers(player)
     local strengthMult = MultiplierManager.checkStrengthMultiplier(player)
     local rebirthMult = MultiplierManager.checkRebirthMultiplier(player)
     local friendMult = MultiplierManager.checkFriendMultiplier(player)
-    local globalMult = MultiplierManager.checkGlobalMultiplier(player)
+    local globalCoinMult = MultiplierManager.checkGlobalMultiplier(player, "Coins")
+    local globalStrengthMult = MultiplierManager.checkGlobalMultiplier(player, "Strength")
     
     return {
         Coin = coinMult,
         Strength = strengthMult,
         Rebirth = rebirthMult,
         Friend = friendMult,
-        Global = globalMult,
-        TotalCoin = coinMult * rebirthMult * friendMult * globalMult,
-        TotalStrength = strengthMult * friendMult * globalMult,
+        GlobalCoin = globalCoinMult,
+        GlobalStrength = globalStrengthMult,
+        TotalCoin = coinMult * rebirthMult * friendMult * globalCoinMult,
+        TotalStrength = strengthMult * friendMult * globalStrengthMult,
     }
 end
 
